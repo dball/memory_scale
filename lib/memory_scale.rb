@@ -1,7 +1,9 @@
 class MemoryScale
 
-  def initialize(ancestor)
-    @ancestor = ancestor
+  attr_reader :objects
+
+  def initialize(match = Object)
+    @match = match
     tare
   end
 
@@ -18,7 +20,7 @@ class MemoryScale
     GC.start
     objects = {}
     each_object do |object|
-      if contains_object?(@objects, object)
+      unless contains_object?(@objects, object)
         store_object(objects, object)
       end
     end
@@ -29,7 +31,7 @@ class MemoryScale
   private
 
   def each_object
-    ObjectSpace.each_object(@ancestor) do |object|
+    ObjectSpace.each_object(@match) do |object|
       yield object
     end
   end
@@ -39,7 +41,8 @@ class MemoryScale
   end
 
   def contains_object?(container, object)
-    container[object.class].try(:include?, get_object_id(object))
+    class_container = container[object.class]
+    class_container.include?(get_object_id(object)) if class_container
   end
 
   def get_object_id(object)
