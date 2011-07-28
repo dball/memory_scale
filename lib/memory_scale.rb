@@ -7,8 +7,8 @@ class MemoryScale
   def tare
     GC.start
     @objects = {}
-    each_object do |object, id|
-      (@objects[object.class] ||= []) << id
+    each_object do |object|
+      store_object(@objects, object)
     end
     @objects
   end
@@ -16,10 +16,9 @@ class MemoryScale
   def weigh
     GC.start
     objects = {}
-    each_object do |object, id|
-      instances = @objects[object.class]
-      if instances.try(:include?, id)
-        (objects[object.class] ||= []) << id
+    each_object do |object|
+      if contains_object?(@objects, object)
+        store_object(objects, object)
       end
     end
     objects
@@ -30,9 +29,20 @@ class MemoryScale
 
   def each_object
     ObjectSpace.each_object(ActiveRecord::Base) do |object|
-      id = object.repond_to?(:id) ? object.id : object.object_id
-      yield object, id
+      yield object
     end
+  end
+
+  def store_object(container, object)
+    (container[object.class] ||= []) << get_object_id(object)
+  end
+
+  def contains_object?(container, object)
+    container[object.class].try(:include?, get_object_id(object))
+  end
+
+  def get_object_id(object)
+    object.respond_to?(:id) ? object.id : object.object_id
   end
 
 end
