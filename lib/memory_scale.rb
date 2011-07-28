@@ -1,6 +1,7 @@
 class MemoryScale
 
-  def initialize
+  def initialize(ancestor)
+    @ancestor = ancestor
     tare
   end
 
@@ -28,7 +29,7 @@ class MemoryScale
   private
 
   def each_object
-    ObjectSpace.each_object(ActiveRecord::Base) do |object|
+    ObjectSpace.each_object(@ancestor) do |object|
       yield object
     end
   end
